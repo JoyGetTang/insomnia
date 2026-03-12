@@ -1,4 +1,4 @@
-import type { ElectronApplication, Locator, Page } from '@playwright/test';
+import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test';
 
 /*
  * Component for the **Collection page**
@@ -83,6 +83,10 @@ export class CollectionPage {
     await this.page.getByRole('button', { name: 'Export' }).click();
     await this.page.getByRole('combobox').click();
     // not finish the export flow since it will trigger the native file dialog which is hard to test, but we can at least verify the export button and dropdown are working as expected
+  }
+
+  async assertResponseBody(expected: string) {
+    await expect.soft(this.responsePane).toContainText(expected);
   }
 
   getUrlInRequestPane(text: string): Locator {

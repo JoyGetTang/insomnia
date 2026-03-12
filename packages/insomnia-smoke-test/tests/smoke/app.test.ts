@@ -4,11 +4,8 @@ import { test } from '../../playwright/test';
 
 test('can send requests', async ({ page, insomnia }) => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
-
-  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
-  const responseBody = page.getByTestId('response-pane');
   const collectionPage = insomnia.collectionPage;
-
+  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
   await insomnia.importFixture('clipboard', 'smoke-test-collection.yaml');
 
   await collectionPage.exportCollection();
@@ -24,9 +21,9 @@ test('can send requests', async ({ page, insomnia }) => {
 
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"id": "1"');
+  await collectionPage.assertResponseBody('"id": "1"');
   await collectionPage.selectPreview('Raw');
-  await expect.soft(responseBody).toContainText('{"id":"1"}');
+  await collectionPage.assertResponseBody('{"id":"1"}');
 
   await collectionPage.selectCollection('connects to event stream and shows ping response');
   await expect.soft(collectionPage.getUrlInRequestPane(`http://127.0.0.1:4010/events`)).toBeVisible();
@@ -34,7 +31,7 @@ test('can send requests', async ({ page, insomnia }) => {
   await collectionPage.Connect(true);
   await expect.soft(statusTag).toContainText('200 OK');
   await collectionPage.clickConsoleTab();
-  await expect.soft(responseBody).toContainText('Connected to 127.0.0.1');
+  await collectionPage.assertResponseBody('Connected to 127.0.0.1');
   await collectionPage.Connect(false);
 
   await collectionPage.selectCollection('sends dummy.csv request and shows rich response');
@@ -44,7 +41,7 @@ test('can send requests', async ({ page, insomnia }) => {
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
   await collectionPage.selectPreview('Raw');
-  await expect.soft(responseBody).toContainText('a,b,c');
+  await collectionPage.assertResponseBody('a,b,c');
 
   await collectionPage.selectCollection('sends dummy.xml request and shows raw response');
 
@@ -52,8 +49,8 @@ test('can send requests', async ({ page, insomnia }) => {
 
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('xml version="1.0"');
-  await expect.soft(responseBody).toContainText('<LoginResult>');
+  await collectionPage.assertResponseBody('xml version="1.0"');
+  await collectionPage.assertResponseBody('<LoginResult>');
 
   await collectionPage.selectCollection('sends dummy.pdf request and shows rich response');
 
@@ -67,7 +64,7 @@ test('can send requests', async ({ page, insomnia }) => {
   await collectionPage.selectCollection('sends request with basic authentication');
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('basic auth received');
+  await collectionPage.assertResponseBody('basic auth received');
 
   await collectionPage.selectCollection('sends request with cookie and get cookie in response');
 
@@ -75,7 +72,7 @@ test('can send requests', async ({ page, insomnia }) => {
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
   await collectionPage.clickConsoleTab();
-  await expect.soft(responseBody).toContainText('Set-Cookie: insomnia-test-cookie=value123');
+  await collectionPage.assertResponseBody('Set-Cookie: insomnia-test-cookie=value123');
 
   await collectionPage.selectCollection('delayed request');
   await expect.soft(collectionPage.getUrlInRequestPane(`http://127.0.0.1:4010/delay/seconds/20`)).toBeVisible();
