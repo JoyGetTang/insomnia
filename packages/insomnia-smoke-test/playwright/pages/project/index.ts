@@ -1,7 +1,9 @@
-import type { ElectronApplication, Page } from '@playwright/test';
+import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test';
 
 import { loadFixture } from '../../paths';
 import { WorkspaceListComponent } from './workspace-list';
+import { ImportModalComponent } from '../components/import-modal';
+import { CollectionPage } from '../components/collection';
 
 /**
  * Page Object for the **project page** (file list view).
@@ -24,9 +26,6 @@ export class ProjectPage {
   }
 
   /** The root app container. */
-  get root() {
-    return this.page.locator('.app');
-  }
 
   // ===========================================================================
   // Import (ONLY available on project page)
@@ -36,13 +35,4 @@ export class ProjectPage {
    * Import a fixture file from clipboard.
    * This is the most common operation in tests.
    */
-  async importFixture(fixturePath: string): Promise<void> {
-    const text = await loadFixture(fixturePath);
-    await this.app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-
-    await this.root.getByLabel('Import').click();
-    await this.page.locator('[data-test-id="import-from-clipboard"]').click();
-    await this.page.getByRole('button', { name: 'Scan' }).click();
-    await this.page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
-  }
 }

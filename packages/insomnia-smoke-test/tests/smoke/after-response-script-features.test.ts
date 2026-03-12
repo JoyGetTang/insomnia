@@ -1,90 +1,68 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('after-response script features tests', () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
-  test('all', async ({ page, app }) => {
+  test('all', async ({ page, insomnia }) => {
+    const collectionPage = insomnia.collectionPage;
+    const statusTag = collectionPage.statusTag;
+
     // import global environment
-    const globalEnvText = await loadFixture('script-global-environment.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), globalEnvText);
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+    // test use clipboard to import fixture
+    await insomnia.importFixture('clipboard', 'script-global-environment.yaml');
     await page.getByTestId('project').click();
     // import collection with after-response scripts
-    const text = await loadFixture('after-response-collection.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
-
+    // test use upload-file to import fixture
+    await insomnia.importFixture('file', 'after-response-collection.yaml');
     // set transient var
-    const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
-    await page.getByLabel('Request Collection').getByTestId('transient var').press('Enter');
+    await collectionPage.selectCollection('transient var');
 
     // send
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+    await collectionPage.sendRequest();
+    await collectionPage.clickTestsTab();
 
     // verify response
     await expect.soft(statusTag).toContainText('200 OK');
 
     // verify
-    await page.getByRole('tab', { name: 'Tests' }).click();
+    await collectionPage.clickTestsTab();
 
-    const rows = page.getByTestId('test-result-row');
-    await expect.soft(rows.first()).toContainText('PASS');
+    await expect.soft(collectionPage.rows).toContainText('PASS');
 
     // post: insomnia.test and insomnia.expect can work together
-    await page.getByLabel('Request Collection').getByTestId('tests with expect and test').press('Enter');
+    await collectionPage.selectCollection('tests with expect and test');
 
     // send
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
-
+    await collectionPage.sendRequest();
     // verify
-    await page.getByRole('tab', { name: 'Tests' }).click();
+    await collectionPage.clickTestsTab();
 
-    const responsePane = page.getByTestId('response-pane');
-    await expect.soft(responsePane).toContainText('PASS');
-    await expect
-      .soft(responsePane)
-      .toContainText(
-        'FAILunhappy tests | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
-      );
-    await expect.soft(responsePane).toContainText('PASShappyTestInFunc');
-    await expect
-      .soft(responsePane)
-      .toContainText(
-        'FAILsadTestInFunc | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
-      );
-    await expect.soft(responsePane).toContainText('PASSasyncHappyTestInFunc');
-    await expect
-      .soft(responsePane)
-      .toContainText(
-        'FAILasyncSadTestInFunc | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
-      );
+    const responsePane = collectionPage.responsePane;
+    const expectedFragments = [
+      'PASS',
+      'FAILunhappy tests | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
+      'FAILsadTestInFunc | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
+      'PASShappyTestInFunc',
+      'PASSasyncHappyTestInFunc',
+      'FAILasyncSadTestInFunc | error: AssertionError: expected 199 to deeply equal 200 | ACTUAL: 199 | EXPECTED: 200',
+    ];
+
+    await Promise.all(expectedFragments.map(fragment => expect.soft(responsePane).toContainText(fragment)));
 
     // environment and baseEnvironment can be persisted
-    const statusTag1 = page.locator('[data-testid="response-status-tag"]:visible');
-    await page.getByLabel('Request Collection').getByTestId('persist environments').press('Enter');
-
+    await collectionPage.selectCollection('persist environments');
     // send
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+    await collectionPage.sendRequest();
 
     // verify response
-    await expect.soft(statusTag1).toContainText('200 OK');
+    await expect.soft(statusTag).toContainText('200 OK');
 
     // verify persisted environment
-    await page.getByRole('button', { name: 'Manage Environments' }).click();
-    await page.getByRole('button', { name: 'Manage collection environments' }).click();
-    const responseBody = page.getByRole('dialog').getByTestId('CodeEditor').locator('.CodeMirror-line');
-    const rows1 = await responseBody.allInnerTexts();
-    const bodyJson = JSON.parse(rows1.join(' '));
+    await collectionPage.clickBaseEnvironment();
+    await collectionPage.clickEditBaseEnvironment();
 
+    const tableData = await collectionPage.baseEnvironmentTable.allInnerTexts();
+    const bodyJson = JSON.parse(tableData.join(' '));
     expect.soft(bodyJson).toEqual({
       // no environment is selected so the environment value will be persisted to the base environment
       __fromAfterScript1: 'baseEnvironment',
@@ -92,26 +70,28 @@ test.describe('after-response script features tests', () => {
       __fromAfterScript: 'environment',
       base_url: 'http://localhost:4010',
     });
-    await page.getByRole('button', { name: 'Close', exact: true }).click();
+
+    await collectionPage.closeManageEnvironments();
 
     // globals and baseGlobals can be persisted
-    await page.locator('body').click();
-    await page.getByLabel('Request Collection').getByTestId('persist global environment').press('Enter');
+    await insomnia.clickBody();
+    await collectionPage.selectCollection('persist global environment');
     // activate global sub environment
-    await page.getByLabel('Manage Environments').click();
-    await page.getByPlaceholder('Choose a global environment').click();
-    await page.getByRole('option', { name: 'Script Environment' }).click();
-    await page.getByRole('option', { name: 'Sub Script Env' }).click();
-    await page.locator('body').click();
+    await collectionPage.clickBaseEnvironment();
+    await collectionPage.selectGlobalEnvironment();
+    await collectionPage.selectOption('Script Environment');
+    await collectionPage.selectOption('Sub Script Env');
+
+    await insomnia.clickBody();
     // send
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+    await collectionPage.sendRequest();
     // check when activate global sub environment, globals refers to the selected while baseGlobals refers to the base env
-    await page.getByTestId('response-pane').getByRole('tab', { name: 'Console' }).click();
+    await collectionPage.clickConsoleTab();
     await page.getByText('log: globals sub').click();
     await page.getByText('log: baseGlobals base').click();
     // view sub environment has been updated
-    await page.getByLabel('Manage Environments').click();
-    await page.getByLabel('Manage global environment').click();
+    await collectionPage.clickBaseEnvironment();
+    await collectionPage.clickManageGlobalEnvironment();
     await page.getByLabel('Environment name').getByText('Sub Script Env').first().click();
     let globalSubEditor = page.getByTestId('CodeEditor').locator('.CodeMirror-line');
     let globalSubRows = await globalSubEditor.allInnerTexts();

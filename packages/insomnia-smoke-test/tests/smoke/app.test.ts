@@ -7,8 +7,9 @@ test('can send requests', async ({ page, insomnia }) => {
 
   const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
   const responseBody = page.getByTestId('response-pane');
+  const collectionPage = insomnia.collectionPage;
 
-  await insomnia.projectPage.importFixture('smoke-test-collection.yaml');
+  await insomnia.importFixture('clipboard', 'smoke-test-collection.yaml');
 
   await page.getByTestId('workspace-context-dropdown').click();
   await page.getByRole('menuitemradio', { name: 'Export' }).click();
