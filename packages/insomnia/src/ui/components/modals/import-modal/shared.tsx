@@ -202,29 +202,31 @@ export const ScanResultsTable = ({ scanResults }: { scanResults: ScanResult[] })
           const hasErrors = scanResult.errors.length > 0;
           return (
             <React.Fragment key={uniqueKey}>
-              <tr className="table--no-outline-row">
-                <td className="bg-(--hl-xxs)">
-                  <div
-                    className={classNames(
-                      {
-                        'text-danger': hasErrors,
-                      },
-                      'flex items-center gap-(--padding-sm)',
-                    )}
-                  >
-                    {hasErrors ? (
-                      <Fragment>
-                        <i className="fa-regular fa-file fa-lg" />
-                        Parse file {scanResult.oriFileName} failed, this file will not be imported:
-                      </Fragment>
-                    ) : (
-                      <Fragment>
-                        {getImporterSign(scanResult)} resources to be imported from {scanResult.oriFileName}:
-                      </Fragment>
-                    )}
-                  </div>
-                </td>
-              </tr>
+              {scanResult.oriFileName && (
+                <tr className="table--no-outline-row">
+                  <td className="bg-(--hl-xxs)">
+                    <div
+                      className={classNames(
+                        {
+                          'text-danger': hasErrors,
+                        },
+                        'flex items-center gap-(--padding-sm)',
+                      )}
+                    >
+                      {hasErrors ? (
+                        <Fragment>
+                          <i className="fa-regular fa-file fa-lg" />
+                          Parse file {scanResult.oriFileName} failed, this file will not be imported:
+                        </Fragment>
+                      ) : (
+                        <Fragment>
+                          {getImporterSign(scanResult)} resources to be imported from {scanResult.oriFileName}:
+                        </Fragment>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
               {hasErrors ? (
                 <tr>
                   <td>

@@ -336,7 +336,7 @@ export const ImportModal: FC<ImportModalProps> = ({
 };
 const validateCurl = async (value: string) => {
   if (!value) {
-    return 'Invalid cURL request';
+    return 'Please input cURL ';
   }
   try {
     const { data } = await window.main.parseImport({ contentStr: value }, { importerId: 'curl' });
@@ -452,6 +452,8 @@ const ScanResourcesForm = ({
             </div>
           )}
         </form>
+        {/* TODO: need to remove scanResults, if importFrom is changed to avoid confusion since scanResults is only
+        related to current importFrom */}
         {scanResults && (
           <div className="margin-top-sm max-h-[20vh] overflow-y-auto">
             <ScanResultsTable scanResults={scanResults} />
