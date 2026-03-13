@@ -1,16 +1,9 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('Environment Editor', () => {
-  test('manage environment', async ({ page, app }) => {
-    const text = await loadFixture('environments.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  test('manage environment', async ({ page, insomnia, app }) => {
+    await insomnia.importFixture('environments.yaml');
     // Create the environment (which will become active on creation)
     // await page.getByLabel("Select an environment").click();
     await page.getByRole('button', { name: 'Manage Environments' }).click();

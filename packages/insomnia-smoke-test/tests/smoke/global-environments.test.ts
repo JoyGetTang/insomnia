@@ -1,12 +1,13 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('Global Environments', () => {
-  test('import and use a global environment from a collection', async ({ app, page }) => {
-    await loadFixtureFile('collection-for-global-environments.yaml', app, page);
-    await loadFixtureFile('global-environment.yaml', app, page);
+  test('import and use a global environment from a collection', async ({ app, insomnia, page }) => {
+    const collectionPage = insomnia.collectionPage;
+
+    await insomnia.importFixture('collection-for-global-environments.yaml');
+    await collectionPage.backToHome();
+    await insomnia.importFixture('global-environment.yaml');
 
     await page.getByRole('gridcell', { name: 'collection-for-global-' }).click();
     await page.getByTestId('New Request').getByLabel('GET New Request', { exact: true }).click();
@@ -45,12 +46,3 @@ test.describe('Global Environments', () => {
     await page.getByText('New Environment (Copy)').click();
   });
 });
-async function loadFixtureFile(fixture: string, app, page) {
-  const text = await loadFixture(fixture);
-  await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-  await page.getByLabel('Import').click();
-  await page.locator('[data-test-id="import-from-clipboard"]').click();
-  await page.getByRole('button', { name: 'Scan' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
-  await page.getByTestId('project').click();
-}

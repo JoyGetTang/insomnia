@@ -1,29 +1,18 @@
 import { expect } from '@playwright/test';
 
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
-test('Command palette - can switch between requests and workspaces', async ({ app, page }) => {
+test('Command palette - can switch between requests and workspaces', async ({ app, insomnia, page }) => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
+  const collectionPage = insomnia.collectionPage;
 
   // Import a document
-  const swaggerDoc = await loadFixture('swagger2.yaml');
-  await app.evaluate(async ({ clipboard }, swaggerDoc) => clipboard.writeText(swaggerDoc), swaggerDoc);
 
-  await page.getByLabel('Import').click();
-  await page.locator('[data-test-id="import-from-clipboard"]').click();
-  await page.getByRole('button', { name: 'Scan' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
-  await page.getByTestId('project').click();
+  await insomnia.importFixture('swagger2.yaml');
+  await collectionPage.backToHome();
 
   // Import a collection
-  const text = await loadFixture('smoke-test-collection.yaml');
-  await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-
-  await page.getByLabel('Import').click();
-  await page.locator('[data-test-id="import-from-clipboard"]').click();
-  await page.getByRole('button', { name: 'Scan' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  await insomnia.importFixture('smoke-test-collection.yaml');
 
   await page
     .getByTestId('sends request with cookie and get cookie in response')

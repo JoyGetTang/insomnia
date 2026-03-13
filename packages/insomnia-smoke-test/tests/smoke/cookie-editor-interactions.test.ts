@@ -1,16 +1,10 @@
 import { expect } from '@playwright/test';
 
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('Cookie editor', () => {
-  test.beforeEach(async ({ app, page }) => {
-    const text = await loadFixture('simple.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  test.beforeEach(async ({ insomnia }) => {
+    await insomnia.importFixture('simple.yaml');
   });
 
   test('create and send a cookie', async ({ page }) => {

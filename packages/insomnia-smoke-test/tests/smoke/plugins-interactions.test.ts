@@ -53,26 +53,26 @@ const invalidNames = [
   },
 ];
 
-test('Plugins', async ({ page }) => {
+test('Plugins', async ({ page, insomnia }) => {
+  const preferences = insomnia.preferences;
   // Opening settings
-  await page.getByTestId('settings-button').click();
+  await insomnia.openPreferences();
   // Switching to Plugins tab
-  await page.locator('div[role="tab"]:has-text("Plugins")').click();
+  await preferences.selectTab('Plugins');
 
   // Generate a new valid plugin
-  await page.locator('text=New Plugin').click();
-
   const demoPluginName = 'demo-example';
-  await page.getByTestId('plugin-name-input').fill(demoPluginName);
-  await page.getByTestId('generate-plugin-button').click();
+  await preferences.clickNewPluginButton();
+  await preferences.fillPluginName(demoPluginName);
+  await preferences.clickGeneratePluginButton();
   await expect.soft(page.getByTestId(`insomnia-plugin-${demoPluginName}`)).toBeVisible();
 
   // Reject plugin name with consecutive dashes
-  await page.locator('text=New Plugin').click();
+  await preferences.clickNewPluginButton();
 
   for (const { name, expectedError } of invalidNames) {
-    await page.getByTestId('plugin-name-input').fill(name);
-    await page.getByTestId('generate-plugin-button').click();
+    await preferences.fillPluginName(name);
+    await preferences.clickGeneratePluginButton();
 
     await expect.soft(page.getByTestId('plugin-name-error')).toBeVisible();
     await expect.soft(page.getByTestId('plugin-name-error')).toHaveText(expectedError);
@@ -80,21 +80,21 @@ test('Plugins', async ({ page }) => {
 
   // Reject overly long plugin names
   const longName = 'a'.repeat(256);
-  await page.getByTestId('plugin-name-input').fill(longName);
-  await page.getByTestId('generate-plugin-button').click();
+  await preferences.fillPluginName(longName);
+  await preferences.clickGeneratePluginButton();
   await expect.soft(page.getByTestId('plugin-name-error')).toBeVisible();
   await expect.soft(page.getByTestId('plugin-name-error')).toHaveText('Plugin name must not be empty or too long');
 
   // Prevent creating a plugin with a name that already exists
   const pluginName = 'duplicate-plugin';
-  await page.getByTestId('plugin-name-input').fill(pluginName);
-  await page.getByTestId('generate-plugin-button').click();
+  await preferences.fillPluginName(pluginName);
+  await preferences.clickGeneratePluginButton();
   await expect.soft(page.getByTestId(`insomnia-plugin-${pluginName}`)).toBeVisible();
 
   // Try to generate the same plugin again
-  await page.locator('text=New Plugin').click();
-  await page.getByTestId('plugin-name-input').fill(pluginName);
-  await page.getByTestId('generate-plugin-button').click();
+  await preferences.clickNewPluginButton();
+  await preferences.fillPluginName(pluginName);
+  await preferences.clickGeneratePluginButton();
 
   await expect.soft(page.getByTestId('plugin-name-error')).toBeVisible();
   await expect.soft(page.getByTestId('plugin-name-error')).toHaveText('Plugin already exists');

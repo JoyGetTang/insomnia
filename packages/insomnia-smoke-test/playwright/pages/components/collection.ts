@@ -32,22 +32,30 @@ export class CollectionPage {
     await this.page.getByLabel('Request Collection').getByTestId(name).press('Enter');
   }
 
+  async selectFolder(name: string): Promise<void> {
+    await this.page.getByTestId(name).click();
+  }
+
   async sendRequest(): Promise<void> {
     await this.page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
   }
 
-  async Connect(isConnected: boolean): Promise<void> {
+  async start(): Promise<void> {
+    await this.page.getByTestId('request-pane').getByRole('button', { name: 'start' }).click();
+  }
+
+  async Connect(isConnected: boolean = true): Promise<void> {
     isConnected
       ? await this.page.getByTestId('request-pane').getByRole('button', { name: 'Connect' }).click()
       : await this.page.getByTestId('request-pane').getByRole('button', { name: 'Disconnect' }).click();
   }
 
-  async clickTestsTab(): Promise<void> {
-    await this.page.getByRole('tab', { name: 'Tests' }).click();
-  }
-
-  async clickConsoleTab(): Promise<void> {
-    await this.page.getByRole('tab', { name: 'Console' }).click();
+  async selectResponseTab(type: string): Promise<void> {
+    try {
+      await this.page.getByRole('tab', { name: type }).click();
+    } catch (error) {
+      await this.page.getByRole('tab', { name: type, exact: true }).click();
+    }
   }
   async clickBaseEnvironment(): Promise<void> {
     await this.baseEnvironment.click();
@@ -73,6 +81,23 @@ export class CollectionPage {
     await this.manageGlobalEnvironment.click();
   }
 
+  async clickImportFromUrl(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Import from URL' }).click();
+  }
+
+  async clickReflectiongRPC(): Promise<void> {
+    await this.page.getByTestId('button-server-reflection').click();
+  }
+
+  async clickCommit() {
+    await this.page.getByRole('button', { name: 'Commit' }).click();
+  }
+
+  async selectMethod(option: string): Promise<void> {
+    await this.page.getByRole('button', { name: 'Select Method' }).click();
+    await this.page.getByRole('option', { name: option }).click();
+  }
+
   async cancelRequest(): Promise<void> {
     await this.page.getByRole('button', { name: 'Cancel Request' }).click();
   }
@@ -89,6 +114,9 @@ export class CollectionPage {
     await expect.soft(this.responsePane).toContainText(expected);
   }
 
+  async assertUrl(expected: string) {
+    await expect.soft(this.responsePane).toContainText(expected);
+  }
   getUrlInRequestPane(text: string): Locator {
     return this.page.getByTestId('request-pane').getByTestId('OneLineEditor').getByText(text);
   }
@@ -146,5 +174,74 @@ export class CollectionPage {
       default:
         throw new Error(`Unsupported type: ${type}`);
     }
+  }
+
+  async selectRequestConfig(type: string): Promise<void> {
+    await this.page.getByRole('tab', { name: type }).click();
+  }
+
+  async addStream(times: number): Promise<void> {
+    for (let i = 0; i < times; i++) {
+      await this.page.locator('[data-testid="request-pane"] button:has-text("Stream")').click();
+    }
+  }
+
+  async clearOauth2Session(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Clear OAuth 2 session' }).click();
+  }
+
+  async fillElectron(login: string, password: string, fun?: Promise<void>) {
+    const [initialLoginPage] = await Promise.all([
+      this.app.waitForEvent('window'),
+      (await fun) || (await this.sendRequest()),
+    ]);
+    await initialLoginPage.waitForLoadState();
+    await initialLoginPage.waitForFunction("document.cookie !== ''");
+    await initialLoginPage.locator('[name="login"]').fill(login);
+    await initialLoginPage.locator('[name="password"]').fill(password);
+    await initialLoginPage.locator('button:has-text("Sign-in")').click();
+  }
+
+  async addCaCertificates(filePath: string) {
+    await this.page.getByRole('button', { name: 'Add Certificates' }).click();
+
+    let fileChooser = this.page.waitForEvent('filechooser');
+    await this.page.getByRole('button', { name: 'Add CA Certificate' }).click();
+    await (await fileChooser).setFiles(filePath);
+
+    await this.page.getByRole('button', { name: 'Done' }).click();
+  }
+
+  async addClientCertificates(crt: string, key: string) {
+    await this.page.getByRole('button', { name: 'Add Certificates' }).click();
+    await this.page.getByRole('button', { name: 'Add client certificate' }).click();
+    await this.page.locator('[name="host"]').fill('localhost');
+
+    let fileChooser = this.page.waitForEvent('filechooser');
+    await this.page.locator('[data-test-id="add-client-certificate-file-chooser"]').click();
+    await (await fileChooser).setFiles(crt);
+
+    fileChooser = this.page.waitForEvent('filechooser');
+
+    await this.page.locator('[data-test-id="add-client-certificate-key-file-chooser"]').click();
+    await (await fileChooser).setFiles(key);
+
+    await this.page.getByRole('dialog').getByRole('button', { name: 'Add certificate' }).click();
+    await this.page.getByRole('button', { name: 'Done' }).click();
+  }
+
+  async addMockServer(name?: string) {
+    await this.page.getByLabel('New Mock Server').click();
+    name && (await this.page.getByRole('textbox', { name: 'Name' }).fill(name));
+    // use default config instant
+    await this.page.getByRole('button', { name: 'Create', exact: true }).click();
+  }
+
+  async clickServer(name: string) {
+    await this.page.getByRole('button', { name: name }).click();
+  }
+
+  async backToHome() {
+    await this.page.getByTestId('project').click();
   }
 }

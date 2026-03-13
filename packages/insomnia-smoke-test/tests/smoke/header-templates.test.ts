@@ -1,32 +1,21 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
-test('can requests that contain templated header keys and values', async ({ app, page }) => {
+test('can requests that contain templated header keys and values', async ({ insomnia }) => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
 
-  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
-  const responsePaneContents = page.locator('[data-testid="response-pane"] >> [data-testid="CodeEditor"]:visible', {
-    has: page.locator('.CodeMirror-activeline'),
-  });
+  const collectionPage = insomnia.collectionPage;
+  const statusTag = collectionPage.statusTag;
 
-  const collectionText = await loadFixture('header-templates.yaml');
-  await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), collectionText);
+  await insomnia.importFixture('header-templates.yaml');
 
-  await page.getByLabel('Import').click();
-  await page.locator('[data-test-id="import-from-clipboard"]').click();
-  await page.getByRole('button', { name: 'Scan' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  await collectionPage.selectCollection('pet2');
 
-  await page.getByLabel('Request Collection').getByTestId('pet2').press('Enter');
-
-  await page.getByRole('button', { name: 'Send' }).click();
+  await collectionPage.sendRequest();
 
   await expect.soft(statusTag).toContainText('200 OK');
-  await page.getByRole('button', { name: 'Preview' }).click();
-  await page.getByRole('menuitem', { name: 'Raw Data' }).click();
-  await expect.soft(responsePaneContents).toContainText('{"id":"2"}');
-  await page.getByRole('tab', { name: 'Console' }).click();
-  await expect.soft(responsePaneContents).toContainText('X-Foo-Bar: baz');
+  await collectionPage.selectPreview('Raw');
+  await collectionPage.assertResponseBody('{"id":"2"}');
+  await collectionPage.selectResponseTab('Console');
+  await collectionPage.assertResponseBody('X-Foo-Bar: baz');
 });

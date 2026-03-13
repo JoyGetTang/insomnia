@@ -6,7 +6,7 @@ test('can send requests', async ({ page, insomnia }) => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
   const collectionPage = insomnia.collectionPage;
   const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
-  await insomnia.importFixture('clipboard', 'smoke-test-collection.yaml');
+  await insomnia.importFixture('smoke-test-collection.yaml');
 
   await collectionPage.exportCollection();
   await insomnia.pressEscape();
@@ -28,9 +28,9 @@ test('can send requests', async ({ page, insomnia }) => {
   await collectionPage.selectCollection('connects to event stream and shows ping response');
   await expect.soft(collectionPage.getUrlInRequestPane(`http://127.0.0.1:4010/events`)).toBeVisible();
 
-  await collectionPage.Connect(true);
+  await collectionPage.Connect();
   await expect.soft(statusTag).toContainText('200 OK');
-  await collectionPage.clickConsoleTab();
+  await collectionPage.selectResponseTab('Console');
   await collectionPage.assertResponseBody('Connected to 127.0.0.1');
   await collectionPage.Connect(false);
 
@@ -58,7 +58,7 @@ test('can send requests', async ({ page, insomnia }) => {
 
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
-  await collectionPage.clickConsoleTab();
+  await collectionPage.selectResponseTab('Console');
   await page.locator('pre').filter({ hasText: '< Content-Type: application/pdf' }).click();
 
   await collectionPage.selectCollection('sends request with basic authentication');
@@ -71,7 +71,7 @@ test('can send requests', async ({ page, insomnia }) => {
   await expect.soft(collectionPage.getUrlInRequestPane(`http://127.0.0.1:4010/cookies`)).toBeVisible();
   await collectionPage.sendRequest();
   await expect.soft(statusTag).toContainText('200 OK');
-  await collectionPage.clickConsoleTab();
+  await collectionPage.selectResponseTab('Console');
   await collectionPage.assertResponseBody('Set-Cookie: insomnia-test-cookie=value123');
 
   await collectionPage.selectCollection('delayed request');

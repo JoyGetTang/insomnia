@@ -5,7 +5,7 @@ import { test } from '../../playwright/test';
 
 test('can chain multiple requests', async ({ app, insomnia }) => {
   const collectionPage = insomnia.collectionPage;
-  await insomnia.importFixture('clipboard', 'chained-responses.yaml');
+  await insomnia.importFixture('chained-responses.yaml');
   await collectionPage.selectCollection('third');
 
   await collectionPage.sendRequest();

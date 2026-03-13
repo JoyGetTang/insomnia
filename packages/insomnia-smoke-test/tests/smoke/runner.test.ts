@@ -7,8 +7,8 @@ test.describe('runner features tests', () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
 
   test.beforeEach(async ({ page, insomnia }) => {
-    await insomnia.projectPage.importFixture('runner-collection.yaml');
-    await insomnia.statusbar.openPreferences();
+    await insomnia.importFixture('runner-collection.yaml');
+    await insomnia.openPreferences();
     await page.getByText('Use vertical layout').click();
     await page.locator('.app').press('Escape');
   });

@@ -9,14 +9,8 @@ import { test } from '../../playwright/test';
 test.describe('pre-request features tests', () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
 
-  test.beforeEach(async ({ app, page }) => {
-    const text = await loadFixture('pre-request-collection.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  test.beforeEach(async ({ insomnia }) => {
+    await insomnia.importFixture('pre-request-collection.yaml');
   });
 
   const testCases = [
@@ -208,16 +202,17 @@ test.describe('pre-request features tests', () => {
         }),
     };
   });
-  test('run test cases', async ({ page }) => {
+
+  test('run test cases', async ({ page, insomnia }) => {
+    const collectionPage = insomnia.collectionPage;
     for (const tc of testCases) {
       console.log(`Running test case: ${tc.name}`);
 
-      await page.getByLabel('Request Collection').getByTestId(tc.name).press('Enter');
-
-      await page.getByTestId('request-pane').getByLabel('Params').click();
-      await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+      await collectionPage.selectCollection(tc.name);
+      await collectionPage.selectRequestConfig('Params');
+      await collectionPage.sendRequest();
       // verify
-      await expect.soft(page.locator('[data-testid="response-status-tag"]:visible')).toContainText('200 OK');
+      await collectionPage.assertResponseBody('200 OK');
 
       const rows = await page
         .getByTestId('response-pane')
@@ -230,6 +225,7 @@ test.describe('pre-request features tests', () => {
       tc.customVerify(bodyJson);
     }
   });
+
   test('send request with content type', async ({ page }) => {
     await page.getByTestId('settings-button').click();
     await page.getByTestId('dataFolders').click();

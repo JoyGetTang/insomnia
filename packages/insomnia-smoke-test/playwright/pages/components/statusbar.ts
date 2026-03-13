@@ -17,9 +17,6 @@ export class StatusbarComponent {
   }
 
   /** Open Insomnia Preferences via the statusbar preferences button. */
-  async openPreferences() {
-    await this.root.getByTestId('settings-button').click();
-  }
 
   /** Open Insomnia Preferences via keyboard shortcut. */
   async openPreferencesViaShortcut() {

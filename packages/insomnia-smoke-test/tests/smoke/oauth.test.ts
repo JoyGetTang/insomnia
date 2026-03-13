@@ -1,71 +1,47 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
-test('can make oauth2 requests', async ({ app, page }) => {
-  const sendButton = page.locator('[data-testid="request-pane"] button:has-text("Send")');
-  const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
-  const responseBody = page.locator('#json-response-viewer + div');
+test('can make oauth2 requests', async ({ insomnia, page }) => {
+  const collectionPage = insomnia.collectionPage;
+  const statusTag = collectionPage.statusTag;
+  const preferencePage = insomnia.preferences;
 
-  const projectView = page.locator('#wrapper');
-
-  const text = await loadFixture('oauth.yaml');
-  await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-
-  await page.getByLabel('Import').click();
-  await page.locator('[data-test-id="import-from-clipboard"]').click();
-  await page.getByRole('button', { name: 'Scan' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+  await insomnia.importFixture('oauth.yaml');
 
   // Test Folder Level Auth propagates to heirs
 
   // select the folder (collapses heirs
-  await page.getByTestId('Folder Level Auth Code').click();
-
-  await page.getByRole('tab', { name: 'Auth' }).click();
-  await page.getByRole('button', { name: 'Clear' }).click();
+  await collectionPage.selectFolder('Folder Level Auth Code');
+  await collectionPage.selectRequestConfig('Auth');
+  await collectionPage.clearOauth2Session();
 
   // expand the folder to see the heirs again
-  await page.getByTestId('Folder Level Auth Code').click();
-  await page.getByLabel('Request Collection').getByTestId('Request with Inherited Auth').press('Enter');
+  await collectionPage.selectFolder('Folder Level Auth Code');
+  await collectionPage.selectCollection('Request with Inherited Auth');
   await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  const [initialLoginPage] = await Promise.all([app.waitForEvent('window'), sendButton.click()]);
-  await initialLoginPage.waitForLoadState();
-  await initialLoginPage.waitForFunction("document.cookie !== ''");
-  await initialLoginPage.locator('[name="login"]').fill('folder');
-  await initialLoginPage.locator('[name="password"]').fill('folder');
-  await initialLoginPage.locator('button:has-text("Sign-in")').click();
+  await collectionPage.fillElectron('folder', 'folder');
   await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "folder"');
+  await collectionPage.assertResponseBody('"sub": "folder"');
 
   // go back to the folder's auth tab
-  await page.getByTestId('Folder Level Auth Code').click();
-  await page.getByRole('tab', { name: 'Auth' }).click();
+  await collectionPage.selectFolder('Folder Level Auth Code');
+  await collectionPage.selectRequestConfig('Auth');
 
   // clear the session (but keep the token!)
-  await page.getByRole('button', { name: 'Clear OAuth 2 session', exact: true }).click();
+  await collectionPage.clearOauth2Session();
 
   // reset ui state
-  await page.getByTestId('Folder Level Auth Code').click();
+  await collectionPage.selectFolder('Folder Level Auth Code');
 
   // No PKCE
-  await projectView.getByLabel('Request Collection').getByTestId('No PKCE').press('Enter');
+  await collectionPage.selectCollection('No PKCE');
   await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-
-  const [authorizationCodePage] = await Promise.all([app.waitForEvent('window'), sendButton.click()]);
-
-  await authorizationCodePage.waitForLoadState();
-  await authorizationCodePage.waitForFunction("document.cookie !== ''");
-  await authorizationCodePage.locator('[name="login"]').fill('admin');
-  await authorizationCodePage.locator('[name="password"]').fill('admin');
-  await authorizationCodePage.locator('button:has-text("Sign-in")').click();
-
+  await collectionPage.fillElectron('admin', 'admin');
   await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "admin"');
+  await collectionPage.assertResponseBody('"sub": "admin"');
 
   // Navigate to the OAuth2 Tab and refresh the token from there
-  await page.getByRole('tab', { name: 'Auth' }).click();
+  await collectionPage.selectRequestConfig('Auth');
   await expect.soft(page.getByRole('button', { name: 'OAuth 2.0' })).toBeVisible();
 
   const tokenInput = page.locator('[for="Access-Token"] > input');
@@ -78,45 +54,43 @@ test('can make oauth2 requests', async ({ app, page }) => {
   await page.locator('button:has-text("Clear OAuth 2 session")').click();
   await page.locator('button:text-is("Clear")').click();
 
-  const [refreshPage] = await Promise.all([
-    app.waitForEvent('window'),
-    page.locator('button:has-text("Fetch Tokens")').click(),
-  ]);
-
-  await refreshPage.waitForLoadState();
-  // expect an _interaction cookie to be set with the sign in form
-  await refreshPage.waitForFunction("document.cookie !== ''");
-  await refreshPage.locator('[name="login"]').fill('admin');
-  await refreshPage.locator('[name="password"]').fill('admin');
-  await refreshPage.locator('button:has-text("Sign-in")').click();
+  await collectionPage.fillElectron('admin', 'admin', page.locator('button:has-text("Fetch Tokens")').click());
 
   await expect.soft(tokenInput).not.toHaveValue('');
 
+  const runOAuth2Test = async (
+    collectionName: string,
+    expectedResponseBody: string,
+    expectedGrantType: string | undefined,
+    expectedChallengeMethod: string | undefined,
+    sendRequest: boolean,
+    loginCredentials?: { username: string; password: string },
+  ) => {
+    await collectionPage.selectCollection(collectionName);
+
+    if (expectedGrantType) {
+      expectedGrantType == 'implicit' && (await page.getByRole('tab', { name: 'Auth' }).click());
+      await expect.soft(page.locator('#Grant-Type')).toHaveValue(expectedGrantType);
+    }
+    if (expectedChallengeMethod) {
+      await expect.soft(page.locator('#Code-Challenge-Method')).toHaveValue(expectedChallengeMethod);
+    }
+
+    sendRequest && (await collectionPage.sendRequest());
+    loginCredentials && (await collectionPage.fillElectron(loginCredentials.username, loginCredentials.password));
+
+    await expect.soft(statusTag).toContainText('200 OK');
+    await collectionPage.assertResponseBody(expectedResponseBody);
+  };
+
   // PKCE SHA256
-  await page.getByLabel('Request Collection').getByTestId('PKCE SHA256').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('authorization_code');
-  await expect.soft(page.locator('#Code-Challenge-Method')).toHaveValue('S256');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "admin"');
+  await runOAuth2Test('PKCE SHA256', '"sub": "admin"', 'authorization_code', 'S256', true);
 
   // PKCE Plain
-  await page.getByLabel('Request Collection').getByTestId('PKCE Plain').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('authorization_code');
-  await expect.soft(page.locator('#Code-Challenge-Method')).toHaveValue('plain');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "admin"');
+  await runOAuth2Test('PKCE Plain', '"sub": "admin"', 'authorization_code', 'plain', true);
 
   // Inherited Auth from folder
-  await page.getByLabel('Request Collection').getByTestId('Request with Inherited Auth').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  // this is the original token from the first login
-  await expect.soft(responseBody).toContainText('"sub": "folder"');
+  await runOAuth2Test('Request with Inherited Auth', '"sub": "folder"', undefined, undefined, true);
 
   // test to ensure that the token does not persist after clearing the folder's auth
   await page.getByTestId('Folder Level Auth Code').click();
@@ -129,71 +103,33 @@ test('can make oauth2 requests', async ({ app, page }) => {
 
   // try the request again, note that it attempts to re-authenticate
   // instead of re-using the original token (the real fix)
-  await page.getByLabel('Request Collection').getByTestId('Request with Inherited Auth').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-
-  const [secondLoginPage] = await Promise.all([app.waitForEvent('window'), sendButton.click()]);
-  await secondLoginPage.waitForLoadState();
-  await secondLoginPage.waitForFunction("document.cookie !== ''");
-  await secondLoginPage.locator('[name="login"]').fill('fresh');
-  await secondLoginPage.locator('[name="password"]').fill('fresh');
-  await secondLoginPage.locator('button:has-text("Sign-in")').click();
-
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "fresh"');
+  await runOAuth2Test('Request with Inherited Auth', '"sub": "fresh"', undefined, undefined, false, {
+    username: 'fresh',
+    password: 'fresh',
+  });
 
   // Reset the OAuth 2 session from Preferences
-  await page.getByTestId('settings-button').click();
-  await page.locator('button:has-text("Clear OAuth 2 session")').click();
-  await page.keyboard.press('Escape');
+  await preferencePage.clearOAuthSession();
 
   // ID Token
-  await page.getByLabel('Request Collection').getByTestId('ID Token').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/id-token');
-  await page.getByRole('tab', { name: 'Auth' }).click();
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('implicit');
 
-  const [implicitPage] = await Promise.all([app.waitForEvent('window'), sendButton.click()]);
-  await implicitPage.waitForLoadState();
-  await implicitPage.waitForFunction("document.cookie !== ''");
-  await implicitPage.locator('[name="login"]').fill('admin');
-  await implicitPage.locator('[name="password"]').fill('admin');
-  await implicitPage.locator('button:has-text("Sign-in")').click();
-
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "admin"');
+  await runOAuth2Test('ID Token', '"sub": "admin"', 'implicit', undefined, false, {
+    username: 'admin',
+    password: 'admin',
+  });
 
   // ID and Access Token
-  await page.getByLabel('Request Collection').getByTestId('ID and Access Token').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('implicit');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "admin"');
+  await runOAuth2Test('ID and Access Token', '"sub": "admin"', 'implicit', undefined, true);
 
   // Reset the OAuth 2 session from Preferences
-  await page.getByTestId('settings-button').click();
-  await page.locator('button:has-text("Clear OAuth 2 session")').click();
-  await page.keyboard.press('Escape');
+  await preferencePage.clearOAuthSession();
 
   // Client Credentials
-  await page.getByLabel('Request Collection').getByTestId('Client Credentials').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/client-credential');
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('client_credentials');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"clientId": "client_credentials"');
+  await runOAuth2Test('Client Credentials', '"clientId": "client_credentials"', 'client_credentials', undefined, true);
 
   // Reset the OAuth 2 session from Preferences
-  await page.getByTestId('settings-button').click();
-  await page.locator('button:has-text("Clear OAuth 2 session")').click();
-  await page.keyboard.press('Escape');
+  await preferencePage.clearOAuthSession();
 
   // Resource Owner Password Credentials
-  await page.getByLabel('Request Collection').getByTestId('Resource Owner Password Credentials').press('Enter');
-  await expect.soft(page.locator('.app')).toContainText('http://127.0.0.1:4010/oidc/me');
-  await expect.soft(page.locator('#Grant-Type')).toHaveValue('password');
-  await sendButton.click();
-  await expect.soft(statusTag).toContainText('200 OK');
-  await expect.soft(responseBody).toContainText('"sub": "foo"');
+  await runOAuth2Test('Resource Owner Password Credentials', '"sub": "foo"', 'password', undefined, true);
 });

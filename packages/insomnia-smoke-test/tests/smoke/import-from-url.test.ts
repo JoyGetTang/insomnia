@@ -1,61 +1,50 @@
 import { expect } from '@playwright/test';
-
-import { InsomniaApp } from '../../playwright/pages';
 import { test } from '../../playwright/test';
 
 test.describe('Import from URL', () => {
   test.beforeEach(async ({ insomnia }) => {
-    await insomnia.projectPage.importFixture('import-from-url.yaml');
+    await insomnia.importFixture('import-from-url.yaml');
   });
 
-  test('Should work as expected in HTTP request', async ({ page }) => {
+  test('Should work as expected in HTTP request', async ({ insomnia }) => {
+    const collectionPage = insomnia.collectionPage;
+    const statusTag = collectionPage.statusTag;
+
     const requestUrl = 'http://localhost:4010/echo?foo=bar&baz=qux';
-    const codeMirror = page.getByTestId('OneLineEditor').first().locator('.CodeMirror');
-    await page.getByText('example http').click();
+    await collectionPage.selectCollection('example http');
 
-    const importFromUrlButton = page.getByRole('button', { name: 'Import from URL' });
-    await importFromUrlButton.click();
-
-    await expect
-      .soft(codeMirror.locator('.CodeMirror-line').getByRole('presentation'))
-      .toHaveText('http://localhost:4010/echo');
+    await collectionPage.clickImportFromUrl();
+    await expect.soft(collectionPage.getUrlInRequestPane('http://localhost:4010/echo')).toBeVisible();
 
     // send
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Send' }).click();
+    await collectionPage.sendRequest();
 
     // verify response
-    const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
     await expect.soft(statusTag).toContainText('200 OK');
 
-    const responsePane = page.getByTestId('response-pane');
-    await page.getByRole('tab', { name: 'Console' }).click();
+    await collectionPage.selectResponseTab('Console');
 
-    await expect.soft(responsePane).toContainText(requestUrl);
+    await collectionPage.assertResponseBody(requestUrl);
   });
 
-  test('Should work as expected in Websocket request', async ({ page }) => {
+  test('Should work as expected in Websocket request', async ({ insomnia }) => {
+    const collectionPage = insomnia.collectionPage;
+    const statusTag = collectionPage.statusTag;
     const requestUrl = 'ws://localhost:4010?foo=bar&baz=qux';
-    const codeMirror = page.getByTestId('OneLineEditor').first().locator('.CodeMirror');
 
-    await page.getByText('example websocket').click();
+    await collectionPage.selectCollection('example websocket');
 
-    const importFromUrlButton = page.getByRole('button', { name: 'Import from URL' });
-    await importFromUrlButton.click();
-
-    await expect
-      .soft(codeMirror.locator('.CodeMirror-line').getByRole('presentation'))
-      .toHaveText('ws://localhost:4010');
+    await collectionPage.clickImportFromUrl();
+    await expect.soft(collectionPage.getUrlInRequestPane('ws://localhost:4010')).toBeVisible();
 
     // connect
-    await page.getByTestId('request-pane').getByRole('button', { name: 'Connect' }).click();
+    await collectionPage.Connect();
 
     // verify response
-    const statusTag = page.locator('[data-testid="response-status-tag"]:visible');
     await expect.soft(statusTag).toContainText('101 Switching Protocols');
 
-    const responsePane = page.getByTestId('response-pane');
-    await page.getByRole('tab', { name: 'Console' }).click();
+    await collectionPage.selectResponseTab('Console');
 
-    await expect.soft(responsePane).toContainText(requestUrl);
+    await collectionPage.assertResponseBody(requestUrl);
   });
 });

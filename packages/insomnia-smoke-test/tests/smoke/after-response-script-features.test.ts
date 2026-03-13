@@ -9,23 +9,23 @@ test.describe('after-response script features tests', () => {
 
     // import global environment
     // test use clipboard to import fixture
-    await insomnia.importFixture('clipboard', 'script-global-environment.yaml');
+    await insomnia.importFixture('script-global-environment.yaml');
     await page.getByTestId('project').click();
     // import collection with after-response scripts
     // test use upload-file to import fixture
-    await insomnia.importFixture('file', 'after-response-collection.yaml');
+    await insomnia.importFixture('after-response-collection.yaml', 'file');
     // set transient var
     await collectionPage.selectCollection('transient var');
 
     // send
     await collectionPage.sendRequest();
-    await collectionPage.clickTestsTab();
+    await collectionPage.selectResponseTab('Tests');
 
     // verify response
     await expect.soft(statusTag).toContainText('200 OK');
 
     // verify
-    await collectionPage.clickTestsTab();
+    await collectionPage.selectResponseTab('Tests');
 
     await expect.soft(collectionPage.rows).toContainText('PASS');
 
@@ -35,7 +35,7 @@ test.describe('after-response script features tests', () => {
     // send
     await collectionPage.sendRequest();
     // verify
-    await collectionPage.clickTestsTab();
+    await collectionPage.selectResponseTab('Tests');
 
     const responsePane = collectionPage.responsePane;
     const expectedFragments = [
@@ -86,7 +86,7 @@ test.describe('after-response script features tests', () => {
     // send
     await collectionPage.sendRequest();
     // check when activate global sub environment, globals refers to the selected while baseGlobals refers to the base env
-    await collectionPage.clickConsoleTab();
+    await collectionPage.selectResponseTab('Console');
     await page.getByText('log: globals sub').click();
     await page.getByText('log: baseGlobals base').click();
     // view sub environment has been updated

@@ -1,19 +1,12 @@
 import { expect } from '@playwright/test';
-
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('Design interactions', () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
 
-  test('Unit Test interactions', async ({ app, page }) => {
+  test('Unit Test interactions', async ({ page, insomnia }) => {
     // Setup
-    const text = await loadFixture('unit-test.yaml');
-    await app.evaluate(async ({ clipboard }, text) => clipboard.writeText(text), text);
-    await page.getByLabel('Import').click();
-    await page.locator('[data-test-id="import-from-clipboard"]').click();
-    await page.getByRole('button', { name: 'Scan' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Import' }).click();
+    await insomnia.importFixture('unit-test.yaml');
     // Switch to Test tab
     await page.click('a:has-text("Test")');
 
