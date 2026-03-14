@@ -3,6 +3,9 @@ import { expect } from '@playwright/test';
 import { getFixturePath, loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
+// export const EXTERNAL_VAULT_PLUGIN_NAME = '@kong/insomnia-plugin-external-vault';
+// test failed because plugin is missing
+
 test('Setup external vault and used in request', async ({ app, page }) => {
   // import request collection and replace the template tag file path with the actual fixture file path
   const text = (await loadFixture('template-tag-collection.yaml')).replace(

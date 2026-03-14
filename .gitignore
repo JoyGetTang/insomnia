@@ -42,3 +42,4 @@ insomnia.ico
 final.rc
 CLAUDE.md
 test-results
+packages/insomnia-smoke-test/playwright-report

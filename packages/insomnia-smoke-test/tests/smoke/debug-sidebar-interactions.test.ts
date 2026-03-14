@@ -1,12 +1,11 @@
 import { expect } from '@playwright/test';
 
-import { loadFixture } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test.describe('Debug-Sidebar', () => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
 
-  test('Requests', async ({ page, insomnia, app }) => {
+  test('Requests', async ({ page, insomnia }) => {
     await insomnia.importFixture('simple.yaml');
 
     //Open Properties in Request Sidebar
@@ -70,7 +69,7 @@ test.describe('Debug-Sidebar', () => {
       });
     // Wait for tab appear
     await page.getByLabel('Insomnia Tabs').getByLabel('tab-test folder', { exact: true }).click();
-    await page.getByLabel('Clear search').click();
+    await page.getByRole('searchbox', { name: 'Request filter' }).clear();
 
     // Open Generate code
     await page.getByLabel('Request Collection').getByRole('row', { name: 'example http' }).click();
