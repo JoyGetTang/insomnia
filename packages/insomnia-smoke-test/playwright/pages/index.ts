@@ -92,7 +92,7 @@ export class InsomniaApp {
       case 'url':
         await this.importModalComponent.importFixtureByUrl(fixture);
         break;
-      case 'curl':
+      case 'cURL':
         await this.importModalComponent.importFixtureByCurl(fixture);
         break;
       default:

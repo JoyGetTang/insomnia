@@ -43,3 +43,4 @@ final.rc
 CLAUDE.md
 test-results
 packages/insomnia-smoke-test/playwright-report
+packages/insomnia-smoke-test/test-results.json
