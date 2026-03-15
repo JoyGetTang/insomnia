@@ -4,7 +4,7 @@ import { StatusbarComponent } from './components/statusbar';
 import { CollectionPage } from './components/collection';
 import { ImportModalComponent } from './components/import-modal';
 import { Preferences } from './components/preferences';
-import { Documents } from './components/documents';
+import { Document } from './components/document';
 
 /**
  * Root facade for the Insomnia E2E Page Object Model.
@@ -29,6 +29,10 @@ import { Documents } from './components/documents';
  *     └── .workspaceList -> WorkspaceListComponent
  * ```
  */
+
+type WorkspaceActionType = 'Open' | 'Duplicate' | 'Rename' | 'Import' | 'Export' | 'Settings' | 'Delete';
+type ImportType = 'clipboard' | 'file' | 'url' | 'cURL';
+
 export class InsomniaApp {
   // ===========================================================================
   // Shared components (layout level)
@@ -45,7 +49,7 @@ export class InsomniaApp {
   collectionPage: CollectionPage;
   importModalComponent: ImportModalComponent;
   preferences: Preferences;
-  documents: Documents;
+  document: Document;
 
   constructor(
     readonly page: Page,
@@ -58,7 +62,7 @@ export class InsomniaApp {
     this.importModalComponent = new ImportModalComponent(page, app);
     this.collectionPage = new CollectionPage(page, app);
     this.preferences = new Preferences(page);
-    this.documents = new Documents(page);
+    this.document = new Document(page);
   }
 
   // ===========================================================================
@@ -79,9 +83,13 @@ export class InsomniaApp {
     await this.root.getByTestId('settings-button').click();
   }
 
-  async importFixture(fixture: string, type: string = 'clipboard'): Promise<void> {
+  async importFixture(fixture: string, type: ImportType = 'clipboard'): Promise<void> {
     // set clipboard as default
-    await this.root.getByLabel('Import').click();
+    try {
+      await this.root.getByLabel('Import').click({ timeout: 3000 });
+    } catch (error) {
+      //No need this action
+    }
     switch (type) {
       case 'clipboard':
         await this.importModalComponent.importFixtureByClipboard(fixture);
@@ -110,7 +118,7 @@ export class InsomniaApp {
     await this.page.getByRole('button', { name: 'Create', exact: true }).click();
   }
 
-  async inviteUser(user: string) {
+  async inviteUser(user: string): Promise<void> {
     await this.page.getByLabel('Invite collaborators').click();
     // await this.page.getByPlaceholder('Enter emails, separated by').click();
     await this.page.getByPlaceholder('Enter emails, separated by').fill(user);
@@ -123,5 +131,30 @@ export class InsomniaApp {
 
   async openWorkspace(name: string): Promise<void> {
     await this.page.getByTestId('workspace-grid').getByLabel(name).click();
+  }
+
+  async actions(type: WorkspaceActionType, index: number = 0): Promise<void> {
+    await this.page.getByRole('button', { name: 'Workspace actions menu button' }).nth(index).click();
+    switch (type) {
+      case 'Open':
+        await this.page.getByRole('button', { name: 'Open in New Tab' }).click();
+      case 'Duplicate':
+        await this.page.getByRole('button', { name: 'Duplicate / Move' }).click();
+      case 'Rename':
+        await this.page.getByRole('button', { name: 'Rename' }).click();
+      case 'Import':
+        await this.page.getByRole('button', { name: 'Import' }).click();
+      case 'Export':
+        await this.page.getByRole('button', { name: 'Export' }).click();
+      case 'Settings':
+        await this.page.getByRole('button', { name: 'Settings' }).click();
+      case 'Delete':
+        await this.page.getByRole('button', { name: 'Delete' }).click();
+        await this.page.getByRole('button', { name: 'Delete' }).click();
+    }
+  }
+
+  async backToHome(): Promise<void> {
+    await this.page.getByTestId('project').click();
   }
 }

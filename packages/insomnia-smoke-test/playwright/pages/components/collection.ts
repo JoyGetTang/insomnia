@@ -3,6 +3,9 @@ import { expect, type ElectronApplication, type Locator, type Page } from '@play
 /*
  * Component for the **Collection page**
  */
+
+type PreviewType = 'Visual' | 'Source' | 'Raw';
+type CreateInCollectionType = 'New' | 'HTTP' | 'SSE' | 'GraphQL' | 'gRPC' | 'WebSocket' | 'Socket.IO' | 'Curl' | 'File';
 export class CollectionPage {
   statusTag: Locator;
   rows: Locator;
@@ -89,7 +92,7 @@ export class CollectionPage {
     await this.page.getByTestId('button-server-reflection').click();
   }
 
-  async clickCommit() {
+  async clickCommit(): Promise<void> {
     await this.page.getByRole('button', { name: 'Commit' }).click();
   }
 
@@ -110,18 +113,18 @@ export class CollectionPage {
     // not finish the export flow since it will trigger the native file dialog which is hard to test, but we can at least verify the export button and dropdown are working as expected
   }
 
-  async assertResponseBody(expected: string) {
+  async assertResponseBody(expected: string): Promise<void> {
     await expect.soft(this.responsePane).toContainText(expected);
   }
 
-  async assertUrl(expected: string) {
+  async assertUrl(expected: string): Promise<void> {
     await expect.soft(this.responsePane).toContainText(expected);
   }
   getUrlInRequestPane(text: string): Locator {
     return this.page.getByTestId('request-pane').getByTestId('OneLineEditor').getByText(text);
   }
 
-  async createInCollection(type: string, curl: string = ''): Promise<void> {
+  async createInCollection(type: CreateInCollectionType, curl: string = ''): Promise<void> {
     await this.page.getByLabel('Create in collection').click();
     switch (type) {
       case 'New':
@@ -159,7 +162,7 @@ export class CollectionPage {
     }
   }
 
-  async selectPreview(type: string): Promise<void> {
+  async selectPreview(type: PreviewType): Promise<void> {
     await this.page.getByTestId('response-pane').getByRole('toolbar').getByRole('button').first().click();
     switch (type) {
       case 'Visual':
@@ -202,7 +205,7 @@ export class CollectionPage {
     await initialLoginPage.locator('button:has-text("Sign-in")').click();
   }
 
-  async addCaCertificates(filePath: string) {
+  async addCaCertificates(filePath: string): Promise<void> {
     await this.page.getByRole('button', { name: 'Add Certificates' }).click();
 
     let fileChooser = this.page.waitForEvent('filechooser');
@@ -212,7 +215,7 @@ export class CollectionPage {
     await this.page.getByRole('button', { name: 'Done' }).click();
   }
 
-  async addClientCertificates(crt: string, key: string) {
+  async addClientCertificates(crt: string, key: string): Promise<void> {
     await this.page.getByRole('button', { name: 'Add Certificates' }).click();
     await this.page.getByRole('button', { name: 'Add client certificate' }).click();
     await this.page.locator('[name="host"]').fill('localhost');
@@ -230,18 +233,14 @@ export class CollectionPage {
     await this.page.getByRole('button', { name: 'Done' }).click();
   }
 
-  async addMockServer(name?: string) {
+  async addMockServer(name?: string): Promise<void> {
     await this.page.getByLabel('New Mock Server').click();
     name && (await this.page.getByRole('textbox', { name: 'Name' }).fill(name));
     // use default config instant
     await this.page.getByRole('button', { name: 'Create', exact: true }).click();
   }
 
-  async clickServer(name: string) {
+  async clickServer(name: string): Promise<void> {
     await this.page.getByRole('button', { name: name }).click();
-  }
-
-  async backToHome() {
-    await this.page.getByTestId('project').click();
   }
 }

@@ -6,7 +6,7 @@ test.describe('Global Environments', () => {
     const collectionPage = insomnia.collectionPage;
 
     await insomnia.importFixture('collection-for-global-environments.yaml');
-    await collectionPage.backToHome();
+    await insomnia.backToHome();
     await insomnia.importFixture('global-environment.yaml');
 
     await page.getByRole('gridcell', { name: 'collection-for-global-' }).click();

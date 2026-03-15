@@ -3,7 +3,7 @@ import { expect } from '@playwright/test';
 import { test } from '../../playwright/test';
 
 test('can render Spectral OpenAPI lint errors', async ({ page, insomnia }) => {
-  const documentsPage = insomnia.documents;
+  const documentsPage = insomnia.document;
   await insomnia.createDocument();
   await documentsPage.useExample('Pet Store');
 

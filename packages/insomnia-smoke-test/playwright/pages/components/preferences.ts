@@ -1,5 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
+type SettingsTabName = 'General' | 'Proxy' | 'Data' | 'Themes' | 'Keyboard' | 'Plugins' | 'Credentials';
+
 export class Preferences {
   constructor(readonly page: Page) {}
 
@@ -7,7 +9,7 @@ export class Preferences {
     await this.page.locator('[name="timeout"]').fill(timeout);
   }
 
-  async selectTab(tabName: string): Promise<void> {
+  async selectTab(tabName: SettingsTabName): Promise<void> {
     switch (tabName) {
       case 'General':
         await this.page.getByRole('tab', { name: 'General' }).click();
@@ -74,13 +76,13 @@ export class Preferences {
   }
 
   // Reset the OAuth 2 session from Preferences
-  async clearOAuthSession() {
+  async clearOAuthSession(): Promise<void> {
     await this.page.getByTestId('settings-button').click();
     await this.page.locator('button:has-text("Clear OAuth 2 session")').click();
     await this.page.keyboard.press('Escape');
   }
 
-  async addFolder(filePath: string) {
+  async addFolder(filePath: string): Promise<void> {
     await this.page.getByTestId('dataFolders').fill(filePath);
     await this.page.getByTestId('dataFolders-btn').click();
   }

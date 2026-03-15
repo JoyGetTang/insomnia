@@ -4,12 +4,10 @@ import { test } from '../../playwright/test';
 
 test('Command palette - can switch between requests and workspaces', async ({ app, insomnia, page }) => {
   test.slow(process.platform === 'darwin' || process.platform === 'win32', 'Slow app start on these platforms');
-  const collectionPage = insomnia.collectionPage;
-
   // Import a document
 
   await insomnia.importFixture('swagger2.yaml');
-  await collectionPage.backToHome();
+  await insomnia.backToHome();
 
   // Import a collection
   await insomnia.importFixture('smoke-test-collection.yaml');
