@@ -243,4 +243,22 @@ export class CollectionPage {
   async clickServer(name: string): Promise<void> {
     await this.page.getByRole('button', { name: name }).click();
   }
+
+  async selectTool(name: string): Promise<void> {
+    const text = 'Tool' + name;
+    await this.page.getByText(text).click();
+  }
+
+  async callTool(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Call Tool' }).click();
+  }
+
+  async connectMcpClient(mcp: string): Promise<void> {
+    await this.page.locator('[data-testid="OneLineEditor"]').click();
+    await this.page.waitForTimeout(1000);
+    await this.page.locator('.CodeMirror textarea').fill(mcp);
+    await this.page.waitForTimeout(1000);
+    await this.Connect();
+    await expect(this.page.getByText('Connected')).toBeInViewport();
+  }
 }

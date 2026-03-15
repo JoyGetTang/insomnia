@@ -32,6 +32,7 @@ import { Document } from './components/document';
 
 type WorkspaceActionType = 'Open' | 'Duplicate' | 'Rename' | 'Import' | 'Export' | 'Settings' | 'Delete';
 type ImportType = 'clipboard' | 'file' | 'url' | 'cURL';
+type WorkspaceFileType = 'Documents' | 'Collections' | 'MCP' | 'Mock' | 'Environments';
 
 export class InsomniaApp {
   // ===========================================================================
@@ -138,23 +139,54 @@ export class InsomniaApp {
     switch (type) {
       case 'Open':
         await this.page.getByRole('button', { name: 'Open in New Tab' }).click();
+        break;
       case 'Duplicate':
         await this.page.getByRole('button', { name: 'Duplicate / Move' }).click();
+        break;
       case 'Rename':
         await this.page.getByRole('button', { name: 'Rename' }).click();
+        break;
       case 'Import':
         await this.page.getByRole('button', { name: 'Import' }).click();
+        break;
       case 'Export':
         await this.page.getByRole('button', { name: 'Export' }).click();
+        break;
       case 'Settings':
         await this.page.getByRole('button', { name: 'Settings' }).click();
+        break;
       case 'Delete':
         await this.page.getByRole('button', { name: 'Delete' }).click();
         await this.page.getByRole('button', { name: 'Delete' }).click();
+        break;
     }
   }
 
   async backToHome(): Promise<void> {
     await this.page.getByTestId('project').click();
+  }
+
+  async addNewFile(type: WorkspaceFileType, name?: string): Promise<void> {
+    switch (type) {
+      case 'Collections':
+        await this.page.getByRole('button', { name: 'New request collection' }).click();
+        break;
+      case 'Documents':
+        await this.page.getByRole('button', { name: 'New design document' }).click();
+        break;
+      case 'MCP':
+        await this.page.getByRole('button', { name: 'New mcp client' }).click();
+        name &&
+          (await this.page.getByRole('textbox', { name: 'Name' }).clear(),
+          await this.page.getByRole('textbox', { name: 'Name' }).fill(name));
+        await this.page.getByRole('button', { name: 'Create', exact: true }).click();
+        break;
+      case 'Environments':
+        await this.page.getByRole('button', { name: 'New Mock Server' }).click();
+        break;
+      case 'Mock':
+        await this.page.getByRole('button', { name: 'New Environment' }).click();
+        break;
+    }
   }
 }
