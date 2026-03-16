@@ -22,11 +22,6 @@ test.describe('document page operations', () => {
     }
   });
 
-  test('import file', async ({ page, insomnia }) => {
-    test.skip();
-    // wait to solve Document-001
-  });
-
   test('import URL', async ({ page, insomnia }) => {
     const documentPage = insomnia.document;
     const url = 'https://petstore.swagger.io/v2/swagger.json';

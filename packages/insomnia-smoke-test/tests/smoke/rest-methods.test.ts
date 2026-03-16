@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test } from '../../playwright/test';
 
 test.describe('REST methods example', () => {
@@ -36,8 +37,11 @@ test.describe('REST methods example', () => {
     ];
     const collection = insomnia.collectionPage;
     await insomnia.importFixture(restFolder);
-    await page.getByTestId(testSuite).getByLabel(testSuite, { exact: true }).click();
-    await page.getByText(testSuite).click();
+    try {
+      await expect(page.getByTestId(tests[0].id)).toBeInViewport();
+    } catch (error) {
+      await page.getByTestId(testSuite).getByLabel(testSuite, { exact: true }).click();
+    }
 
     for (const test of tests) {
       await page.getByTestId(test.id).click();

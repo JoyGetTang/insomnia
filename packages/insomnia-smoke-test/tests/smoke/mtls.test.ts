@@ -6,9 +6,6 @@ import { getFixturePath } from '../../playwright/paths';
 import { test } from '../../playwright/test';
 
 test('can use client certificate for mTLS', async ({ insomnia, page }) => {
-  test.skip();
-  // Expected string: "Client certificate required"
-  //Received string: " Error28 ms0 BJust NowPreviewHeadersCookiesTests0 / 0→ MockConsolePreviewError: SSL peer certificate or SSH remote key was not OKHere are some additional things that may help.Disable SSL Validation  Contact Support"
   const collectionPage = insomnia.collectionPage;
   const statusTag = collectionPage.statusTag;
   const preferencePage = insomnia.preferences;
