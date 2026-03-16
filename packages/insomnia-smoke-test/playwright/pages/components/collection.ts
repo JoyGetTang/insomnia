@@ -114,7 +114,7 @@ export class CollectionPage {
   }
 
   async assertResponseBody(expected: string): Promise<void> {
-    await expect.soft(this.responsePane).toContainText(expected);
+    await expect.soft(this.responsePane).toContainText(expected, { timeout: 10000 });
   }
 
   async assertUrl(expected: string): Promise<void> {

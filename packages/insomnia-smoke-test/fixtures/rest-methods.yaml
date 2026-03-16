@@ -1,0 +1,252 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: My Collection
+meta:
+  id: wrk_6379d0d59b044885bd7f0a9fb20a9c11
+  created: 1773626617463
+  modified: 1773626617463
+  description: ""
+collection:
+  - name: REST Methods Test Suite
+    meta:
+      id: fld_178c5238652045aba320ce6fe7c3b3f2
+      created: 1773626632228
+      modified: 1773628209386
+      sortKey: -1773626626972
+      description: ""
+    children:
+      - url: "{{ _.base_url }}/get"
+        name: HEAD
+        meta:
+          id: req_0de666b33a17412eb8baa47f857658dd
+          created: 1773626632229
+          modified: 1773629398101
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626971
+        method: HEAD
+        scripts:
+          afterResponse: >-
+            insomnia.test("Status is 200 or 204", () => {
+                const statusCode = insomnia.response.code;
+                insomnia.expect(statusCode).to.be.oneOf([200, 204]);
+            });
+
+
+            insomnia.test("Response has no body", () => {
+                const body = insomnia.response.text();
+                insomnia.expect(body).to.equal(""); // HEAD must return empty body
+            });
+
+
+            insomnia.test("Response time < 1000ms", () => {
+                insomnia.expect(insomnia.response.responseTime).to.be.below(1000);
+            });
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/get"
+        name: OPTIONS
+        meta:
+          id: req_47b8b752c4514dfd96e036d90d9f8660
+          created: 1773626632229
+          modified: 1773629463552
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970
+        method: OPTIONS
+        scripts:
+          afterResponse: >-
+            insomnia.test("Status is 200 or 204", () => {
+                insomnia.expect(insomnia.response.code).to.be.oneOf([200, 204]);
+            });
+
+
+            insomnia.test("Has 'Allow' header with GET, HEAD, OPTIONS", () => {
+                const allow = insomnia.response.headers.get('Allow');
+                insomnia.expect(allow).to.include('GET');
+                insomnia.expect(allow).to.include('HEAD');
+                insomnia.expect(allow).to.include('OPTIONS');
+            });
+
+
+            insomnia.test("CORS headers present (if needed)", () => {
+                const corsHeaders = ['Access-Control-Allow-Origin', 'Access-Control-Allow-Methods'];
+                corsHeaders.forEach(header => {
+                    insomnia.expect(insomnia.response.headers.has(header)).to.be.true;
+                });
+            });
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/get"
+        name: GET
+        meta:
+          id: req_90ace989bfc84e54a749c804b23ce075
+          created: 1773626649494
+          modified: 1773629435777
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970.375
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/post"
+        name: POST
+        meta:
+          id: req_62d354c67ba043549c5e83d847c033bf
+          created: 1773626649495
+          modified: 1773629446853
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970.125
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "John",
+              "age": 30
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/delete"
+        name: DELETE
+        meta:
+          id: req_732f255910f04bda8896f16d3debe125
+          created: 1773626649496
+          modified: 1773629441249
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970.25
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/put"
+        name: PUT
+        meta:
+          id: req_94e46ca12ff4465b9474879f71f523ae
+          created: 1773626649496
+          modified: 1773629409833
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970.75
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "id": "123",
+              "data": "updated"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/patch"
+        name: PATCH
+        meta:
+          id: req_d1f0b23204d74e56afbe155efc0f915e
+          created: 1773626649496
+          modified: 1773629420626
+          isPrivate: false
+          description: ""
+          sortKey: -1773626626970.5
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "field": "status",
+              "value": "active"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_fceae46319f7e76dc4783e3407a028a57376252b
+    created: 1773626617465
+    modified: 1773628209384
+environments:
+  name: Base Environment
+  meta:
+    id: env_fceae46319f7e76dc4783e3407a028a57376252b
+    created: 1773626617464
+    modified: 1773628209386
+    isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
+  subEnvironments:
+    - name: OpenAPI env httpbin.org
+      meta:
+        id: env_4ba12f14dca5446880685df14841ba26
+        created: 1773626649494
+        modified: 1773628209385
+        isPrivate: false
+        sortKey: 1773626649494
+      data:
+        scheme: https
+        base_path: ""
+        host: httpbin.org
+    - name: OpenAPI env httpbin.org
+      meta:
+        id: env_9ee4d884911e4b2099d29b6e4c1d309f
+        created: 1773626649494
+        modified: 1773627613068
+        isPrivate: false
+        sortKey: 1773626649494
+      data:
+        scheme: https
+        base_path: ""
+        host: httpbin.org

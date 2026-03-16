@@ -1,7 +1,7 @@
 import { test } from '../../playwright/test';
 
 test.describe('MCP client test', () => {
-  test('create mcp client', async ({ insomnia, page, app }) => {
+  test('create mcp client', async ({ insomnia, page }) => {
     const mcp = 'https://mcp.deepwiki.com/mcp';
     const collectionPage = insomnia.collectionPage;
     await insomnia.addNewFile('MCP');
