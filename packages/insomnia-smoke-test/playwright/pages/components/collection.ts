@@ -1,8 +1,9 @@
-import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test';
-
 /*
  * Component for the **Collection page**
+ * Common functions for operating requests
  */
+
+import { expect, type ElectronApplication, type Locator, type Page } from '@playwright/test';
 
 type PreviewType = 'Visual' | 'Source' | 'Raw';
 type CreateInCollectionType = 'New' | 'HTTP' | 'SSE' | 'GraphQL' | 'gRPC' | 'WebSocket' | 'Socket.IO' | 'Curl' | 'File';

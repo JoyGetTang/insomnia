@@ -1,3 +1,8 @@
+/*
+ * Component for the **Preference**
+ * Common functions for operating preference
+ */
+
 import type { Locator, Page } from '@playwright/test';
 
 type SettingsTabName = 'General' | 'Proxy' | 'Data' | 'Themes' | 'Keyboard' | 'Plugins' | 'Credentials';

@@ -23,10 +23,13 @@ import { Document } from './components/document';
  *
  * ```
  * InsomniaApp (root)
- * ├── .statusbar     -> StatusbarComponent (convenience shortcut)
- * └── .projectPage     -> ProjectPage
- *     ├── .sidebar      -> ProjectSidebarComponent
- *     └── .workspaceList -> WorkspaceListComponent
+ * ├──components
+ *      └──.collection     -> CollectionPage
+ *      └──.document     -> Document
+ *      └──.import-modal     -> ImportModalComponent
+ *      └──.preferences     -> Preferences =
+ *      └──.statusbar     -> StatusbarComponent (convenience shortcut)
+ *
  * ```
  */
 

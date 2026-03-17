@@ -1,3 +1,8 @@
+/*
+ * Component for the **Document**
+ * Common functions for operating folder/test
+ */
+
 import type { Locator, Page } from '@playwright/test';
 
 export type ExampleOption = 'Pet Store' | 'Todo List' | 'Empty';
